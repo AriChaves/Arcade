@@ -2,25 +2,42 @@
 (function(){
 "use strict";
 let A, W, H;
-let me, cpu, ball, sMe, sCpu, rally, best, t, over, serveT, msg, msgT;
+let me, cpu, ball, sMe, sCpu, rally, best, t, over, serveT, msg, msgT, two=false, touchY=[null,null];
 const top=()=>46, PH=()=>Math.max(54,(H-top())*0.2), WIN=7;
 function serve(dir){ ball={x:W/2,y:(top()+H)/2,vx:0,vy:0,dir}; serveT=0.9; rally=0; }
-function finish(){ over=true; const won=sMe>sCpu; A.end({score:sMe*100+best*5-sCpu*20+(won?300:0), rows:[[sMe+' – '+sCpu,'marcador'],[best,'mejor rally'],[won?'aprobado':'rechazado','review']]}); }
+function finish(){ over=true; const won=sMe>sCpu;
+  if(two){ game.overTitle='¡Gana '+(won?'Jugador 1':'Jugador 2')+'!'; A.end({score:0, rows:[[sMe+' – '+sCpu,'marcador'],[best,'mejor rally']]}); return; }
+  game.overTitle='Review terminado'; A.end({score:sMe*100+best*5-sCpu*20+(won?300:0), rows:[[sMe+' – '+sCpu,'marcador'],[best,'mejor rally'],[won?'aprobado':'rechazado','review']]}); }
 const game={
   id:'pong', name:'Code Review', accent:'#9ED8FF',
   desc:'Pong contra el revisor. El primero en llegar a 7 gana.',
   keys:'<kbd>↑</kbd><kbd>↓</kbd> o <kbd>W</kbd><kbd>S</kbd> mover tu paleta',
   overTitle:'Review terminado',
-  init(api){ A=api; },
+  init(api){ A=api; const cv=document.getElementById('c');
+    /* two players on one phone: each one drags on their half of the screen */
+    const track=e=>{ if(window.__padGame!=='pong'||!two) return; const r=cv.getBoundingClientRect(); touchY[e.clientX-r.left<r.width/2?0:1]=e.clientY-r.top; };
+    cv.addEventListener('pointerdown',track); cv.addEventListener('pointermove',e=>{ if(e.buttons||e.pointerType==='touch') track(e); });
+    cv.addEventListener('pointerup',e=>{ const r=cv.getBoundingClientRect(); touchY[e.clientX-r.left<r.width/2?0:1]=null; }); },
   resize(w,h){ W=w; H=h; },
-  start(){ W=A.W; H=A.H; me={y:(top()+H)/2}; cpu={y:(top()+H)/2}; sMe=0; sCpu=0; best=0; t=0; over=false; msg='primero a 7'; msgT=2; serve(1); },
+  start(){ two=window.__duoMode==='2p'; touchY=[null,null];
+    game.desc=two?'Pong para dos en el mismo aparato. El primero en llegar a 7 gana.':'Pong contra el revisor. El primero en llegar a 7 gana.';
+    game.keys=two?'Jugador 1 <kbd>W</kbd><kbd>S</kbd> · Jugador 2 <kbd>↑</kbd><kbd>↓</kbd> · en el celular cada quien arrastra en su mitad':'<kbd>↑</kbd><kbd>↓</kbd> o <kbd>W</kbd><kbd>S</kbd> mover tu paleta';
+    W=A.W; H=A.H; me={y:(top()+H)/2}; cpu={y:(top()+H)/2}; sMe=0; sCpu=0; best=0; t=0; over=false; msg='primero a 7'; msgT=2; serve(1); },
   update(dt){
     if(over) return; t+=dt; if(msgT>0) msgT-=dt;
     const ph=PH(), lo=top()+ph/2+4, hi=H-ph/2-4, sp=(H-top())*1.5;
-    let mv=0; if(A.keys['arrowup']||A.keys['w']) mv--; if(A.keys['arrowdown']||A.keys['s']) mv++;
-    me.y=A.clamp(me.y+mv*sp*dt,lo,hi);
-    const target=ball.vx>0?ball.y:(top()+H)/2, cs=sp*(0.5+Math.min(sMe,6)*0.05);
-    cpu.y=A.clamp(cpu.y+A.clamp(target-cpu.y,-cs*dt,cs*dt),lo,hi);
+    const toward=(p,y)=>A.clamp(p.y+A.clamp(y-p.y,-sp*1.4*dt,sp*1.4*dt),lo,hi);
+    if(two){
+      let m1=0; if(A.keys['w']) m1--; if(A.keys['s']) m1++;
+      let m2=0; if(A.keys['arrowup']) m2--; if(A.keys['arrowdown']) m2++;
+      me.y=touchY[0]!=null?toward(me,touchY[0]):A.clamp(me.y+m1*sp*dt,lo,hi);
+      cpu.y=touchY[1]!=null?toward(cpu,touchY[1]):A.clamp(cpu.y+m2*sp*dt,lo,hi);
+    } else {
+      let mv=0; if(A.keys['arrowup']||A.keys['w']) mv--; if(A.keys['arrowdown']||A.keys['s']) mv++;
+      me.y=A.clamp(me.y+mv*sp*dt,lo,hi);
+      const target=ball.vx>0?ball.y:(top()+H)/2, cs=sp*(0.5+Math.min(sMe,6)*0.05);
+      cpu.y=A.clamp(cpu.y+A.clamp(target-cpu.y,-cs*dt,cs*dt),lo,hi);
+    }
     if(serveT>0){ serveT-=dt; if(serveT<=0){ const s=Math.max(220,W*0.45); const a=A.rnd(-0.5,0.5); ball.vx=Math.cos(a)*s*ball.dir; ball.vy=Math.sin(a)*s; } }
     ball.x+=ball.vx*dt; ball.y+=ball.vy*dt;
     if(ball.y<top()+6){ ball.y=top()+6; ball.vy=Math.abs(ball.vy); }
@@ -29,9 +46,9 @@ const game={
     const hit=(px,py,dir)=>{ const off=A.clamp((ball.y-py)/(ph/2),-1,1); const s=Math.min(Math.hypot(ball.vx,ball.vy)*1.06,W*1.4); const a=off*0.9; ball.vx=Math.cos(a)*s*dir; ball.vy=Math.sin(a)*s; ball.x=px+dir*8; rally++; best=Math.max(best,rally); A.burst(ball.x,ball.y,dir>0?'#9ED8FF':'#EE7563',5); };
     if(ball.vx<0 && ball.x<lx+8 && ball.x>lx-8 && Math.abs(ball.y-me.y)<ph/2+6) hit(lx,me.y,1);
     if(ball.vx>0 && ball.x>rx-8 && ball.x<rx+8 && Math.abs(ball.y-cpu.y)<ph/2+6) hit(rx,cpu.y,-1);
-    if(ball.x<-20){ sCpu++; A.shake(0.8); msg='punto del revisor'; msgT=1.2; if(sCpu>=WIN) return finish(); serve(-1); }
-    if(ball.x>W+20){ sMe++; msg='¡punto tuyo!'; msgT=1.2; if(sMe>=WIN) return finish(); serve(1); }
-    A.hud(['tú '+sMe,'revisor '+sCpu,'rally '+rally]);
+    if(ball.x<-20){ sCpu++; A.shake(0.8); msg=two?'punto del Jugador 2':'punto del revisor'; msgT=1.2; if(sCpu>=WIN) return finish(); serve(-1); }
+    if(ball.x>W+20){ sMe++; msg=two?'punto del Jugador 1':'¡punto tuyo!'; msgT=1.2; if(sMe>=WIN) return finish(); serve(1); }
+    A.hud(two?['J1 '+sMe,'J2 '+sCpu,'rally '+rally]:['tú '+sMe,'revisor '+sCpu,'rally '+rally]);
   },
   draw(){
     const ctx=A.ctx, ph=PH(); ctx.textAlign='center'; ctx.textBaseline='middle';

@@ -18,7 +18,7 @@ const GAMES=[
   G('refactor','Refactor','accion','#9ED8FF','Breakout contra un archivo legacy, token por token.'),
   G('gc','Garbage Collector','accion','#FFCE5C','Snake en el heap, con memory leaks que se expanden solos.'),
   G('flappy','Ping','accion','#FFCE5C','Un paquete que aletea entre firewalls. Un toque para subir.'),
-  G('pong','Code Review','accion','#9ED8FF','Pong contra el revisor. El primero en llegar a 7 gana.'),
+  G('pong','Code Review','accion','#9ED8FF','Pong contra el revisor. El primero en llegar a 7 gana.',{1:'pong',2:'pong'},'Pong para dos en el mismo aparato: W/S contra ↑/↓. El primero a 7 gana.'),
   G('invaders','Bug Invaders','accion','#EE7563','Los bugs bajan en formación. Dispara antes de que lleguen a producción.'),
   G('frogger','Cruza la calle','accion','#5FD6C0','Cruza los carriles sin que te atropellen. Cada cruce va más rápido.'),
   G('pacman','Come-bugs','accion','#FFCE5C','Cómete todos los puntos del laberinto sin que te atrapen los bugs.'),
@@ -43,11 +43,11 @@ const GAMES=[
   G('connect4','Conecta 4','mesa','#FFCE5C','Junta cuatro en línea antes que la computadora.',{1:'connect4',2:'d-connect4',R:'d-connect4'},'Junta cuatro en línea antes que la otra persona.'),
   G('gato','Gato','mesa','#9ED8FF','Tres en línea contra la computadora. Juegas hasta perder 3 veces.',{1:'gato',2:'d-gato',R:'d-gato'},'Tres en línea por turnos. Gana quien junte tres seguidas.'),
   G('reversi','Reversi','mesa','#5FD6C0','Encierra las fichas de la computadora para voltearlas.',{1:'reversi',2:'d-reversi',R:'d-reversi'},'Encierra las fichas de la otra persona para voltearlas.'),
-  G('rps','Piedra, papel o tijera','mesa','#C58BFF','Contra la computadora. Juegas hasta perder 3 veces.'),
-  G('naval','Batalla naval','mesa','#F09A6B','Hunde los 5 barcos de la computadora antes de que hunda los tuyos.'),
+  G('rps','Piedra, papel o tijera','mesa','#C58BFF','Contra la computadora. Juegas hasta perder 3 veces.',{1:'rps',2:'d-rps',R:'d-rps'},'Cada quien elige en secreto. Gana quien llegue a 3.'),
+  G('naval','Batalla naval','mesa','#F09A6B','Hunde los 5 barcos de la computadora antes de que hunda los tuyos.',{1:'naval',2:'d-naval',R:'d-naval'},'Cada quien con su flota escondida. Gana quien hunda la del otro.'),
   G('blackjack','Blackjack (21)','mesa','#6FE0B0','Llega a 21 sin pasarte y gánale a la banca.'),
   G('higherlower','Mayor o menor','mesa','#9ED8FF','¿La siguiente carta es mayor o menor? Un error y se acaba la racha.'),
-  G('hangman','Ahorcado','palabras','#F09A6B','Adivina la palabra letra por letra.'),
+  G('hangman','Ahorcado','palabras','#F09A6B','Adivina la palabra letra por letra.',{1:'hangman',2:'d-hangman',R:'d-hangman'},'La misma palabra para los dos: cada acierto suma y repites turno.'),
   G('wordle','Palabra secreta','palabras','#5FD6C0','Adivina la palabra de 5 letras en 6 intentos.'),
   G('wordsearch','Sopa de letras','palabras','#FFCE5C','Encuentra las 6 palabras escondidas, con calma.'),
   G('mathrush','Cálculo rápido','palabras','#F09A6B','Elige la respuesta antes de que se acabe el tiempo.')
@@ -225,7 +225,7 @@ window.Arcade.onMenu=backToMachine;
 window.Arcade.maxStageH=()=>{ const play=$('play'), stage=$('stage'); if(play.hidden) return Infinity;
   return Math.floor(visibleHeight()-(play.offsetHeight-stage.offsetHeight)-4); };
 /* B exits the game, except in games where you type letters */
-const TYPING=new Set(['wordle','hangman']);
+const TYPING=new Set(['wordle','hangman','d-hangman']);
 window.addEventListener('keydown',e=>{
   if(S.screen!=='play'||e.key.toLowerCase()!=='b'||e.ctrlKey||e.metaKey||e.altKey) return;
   if(TYPING.has(window.__padGame)||(e.target.closest&&e.target.closest('input,textarea'))) return;

@@ -17,7 +17,7 @@ var PADS={
   refactor:{dpad:1,acts:[{t:"Sacar / disparar",k:" ",c:"big"}],hint:"◀ ▶ mueven la paleta"},
   tetris:{dpad:1,acts:[{t:"↻ Girar",k:"ArrowUp",c:"big",n:1},{t:"Soltar",k:" "}],hint:"◀ ▶ mueven · ▼ baja"},
   flappy:{dpad:0,acts:[{t:"▲ Subir",k:" ",c:"big"}],hint:"Toca para subir"},
-  pong:{dpad:1,acts:[],hint:"▲ ▼ mueven tu paleta"},
+  pong:{dpad:1,acts:[],hint:"▲ ▼ mueven tu paleta · en 2P cada quien arrastra en su mitad"},
   invaders:{dpad:1,acts:[{t:"Disparar",k:" ",c:"big"}],hint:"◀ ▶ mueven"},
   memory:{dpad:1,acts:[{t:"Voltear",k:" ",c:"big"}],hint:"También puedes tocar las cartas"},
   connect4:{dpad:1,acts:[{t:"Soltar ficha",k:" ",c:"big",n:1}],hint:"◀ ▶ eligen · o toca la columna"},
@@ -48,6 +48,9 @@ var PADS={
   'd-gato':{dpad:0,acts:[],hint:"Toca la casilla"},
   'd-connect4':{dpad:0,acts:[],hint:"Toca la columna"},
   'd-reversi':{dpad:0,acts:[],hint:"Toca una casilla marcada"},
+  'd-rps':{dpad:0,acts:[],hint:"Toca tu jugada sin que la otra persona vea"},
+  'd-naval':{dpad:0,acts:[],hint:"Toca el tablero de disparos"},
+  'd-hangman':{dpad:0,acts:[],hint:"Toca una letra"},
   sudoku:{dpad:1,acts:nums(1,9).concat([{t:"Borrar",k:"0"},{t:"Notas",k:"n"},{t:"Pista",k:"h"}]),hint:"Mueve con las flechas y toca un número"}
 };
 var send=function(type,k){window.dispatchEvent(new KeyboardEvent(type,{key:k,bubbles:true,cancelable:true}))};
