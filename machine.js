@@ -170,9 +170,15 @@ function random(){
 /* ---------- acercarse a la pantalla y jugar ---------- */
 /* shrink the whole machine so it fits the visible height; never below 55% so buttons stay tappable */
 let fitScale=1;
+/* inside claude.ai the frame grows to fit the page, so innerHeight is not what the viewer sees:
+   estimate it from the browser window minus the browser bar and the viewer's header */
+function visibleHeight(){
+  let framed=false; try{ framed=window.top!==window; }catch(e){ framed=true; }
+  const outer=window.outerHeight||screen.availHeight||window.innerHeight;
+  return framed?outer-(window.innerWidth<600?130:230):window.innerHeight; }
 function fit(){ const m=$('machine'), f=$('fit'), cab=$('cab'); if(m.hidden) return;
   const cs=getComputedStyle(m), pad=parseFloat(cs.paddingTop)+parseFloat(cs.paddingBottom);
-  const h=cab.offsetHeight, avail=window.innerHeight-pad;
+  const h=cab.offsetHeight, avail=visibleHeight()-pad;
   fitScale=Math.max(0.55,Math.min(1,avail/h));
   f.style.transform=fitScale<1?'scale('+fitScale+')':'';
   f.style.marginBottom=fitScale<1?(-(1-fitScale)*h)+'px':''; }
