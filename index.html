@@ -1,0 +1,334 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Bug Arcade</title>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Chivo:wght@700;900&family=JetBrains+Mono:wght@400;500;700&display=swap">
+<style>
+  :root{
+    --ground:#0D1A1E; --panel:#122429; --panel2:#193036; --line:#25454D;
+    --ink:#E9F2EF; --muted:#7E9A9E; --gold:#FFCE5C; --rose:#EE7563;
+    --aqua:#5FD6C0; --violet:#C58BFF;
+    --display:"Chivo","Helvetica Neue",system-ui,sans-serif;
+    --mono:"JetBrains Mono",ui-monospace,"SFMono-Regular",Menlo,monospace;
+    --pixel:"Press Start 2P",ui-monospace,monospace;
+    color-scheme:dark;
+  }
+  *{box-sizing:border-box}
+  [hidden]{display:none!important}
+  html,body{margin:0}
+  body{background:#060D0F; color:var(--ink); font-family:var(--mono); font-size:14px; line-height:1.5}
+  b{font-weight:700}
+  button{font:inherit; color:inherit; cursor:pointer; -webkit-tap-highlight-color:transparent}
+  button:focus-visible{outline:3px solid var(--gold); outline-offset:3px}
+
+  @keyframes blink{0%,55%{opacity:1}56%,100%{opacity:0}}
+  @keyframes glow{0%,100%{text-shadow:0 0 6px #FFCE5C,0 0 22px rgba(255,206,92,.55)}50%{text-shadow:0 0 3px #FFCE5C,0 0 12px rgba(255,206,92,.3)}}
+  @keyframes bulbs{0%,100%{opacity:1}50%{opacity:.35}}
+  @keyframes load{0%{width:0%}100%{width:100%}}
+  @keyframes fsin{0%{opacity:0;transform:scale(.97)}100%{opacity:1;transform:scale(1)}}
+  .blink{animation:blink 1.1s steps(1) infinite}
+  .glow{animation:glow 2.4s ease-in-out infinite}
+
+  /* ===== la máquina ===== */
+  .machine{container-type:inline-size; overflow:hidden; padding:28px 8px 24px; background:radial-gradient(ellipse 60% 45% at 50% 38%,#12303A 0%,#060D0F 70%)}
+  .cab{display:flex; flex-direction:column; align-items:center; transition:transform .75s cubic-bezier(.6,0,.2,1)}
+  .cab.zoom{transform:scale(2.2)}
+  .cab.instant{transition:none}
+
+  .marquee{width:min(780px,100%); background:#0A1416; border:4px solid var(--line); border-bottom:0; border-radius:30px 30px 0 0; padding:14px 18px 0}
+  .bulbs{display:flex; gap:22px; justify-content:center; padding-bottom:10px}
+  .bulbs i{width:10px; height:10px; border-radius:50%; background:var(--c); box-shadow:0 0 10px var(--c); animation:bulbs 1.2s ease-in-out infinite}
+  .bulbs i:nth-child(even){animation-delay:.6s}
+  .sign{background:#102227; border:2px solid #1E3A42; border-radius:12px; padding:18px 8px 16px; display:flex; flex-direction:column; align-items:center; gap:10px; text-align:center}
+  .sign h1{margin:0; font:400 clamp(20px,6cqw,46px)/1 var(--pixel); letter-spacing:2px; color:var(--gold)}
+  .sign p{margin:0; font-size:12px; letter-spacing:6px; color:var(--aqua)}
+
+  .body{width:min(780px,100%); background:#102A31; border:4px solid var(--line); border-top:0; padding:26px 34px 22px; display:flex; flex-direction:column; align-items:center; gap:18px; position:relative}
+  .body::before,.body::after{content:""; position:absolute; top:0; bottom:0; width:8px; background:var(--violet); border-radius:4px; opacity:.8}
+  .body::before{left:8px; box-shadow:12px 0 0 -2px rgba(95,214,192,.7)}
+  .body::after{right:8px; box-shadow:-12px 0 0 -2px rgba(95,214,192,.7)}
+  .bezel{width:100%; background:#050A0B; border-radius:22px; padding:22px; box-shadow:inset 0 0 0 2px #1E3A42,0 10px 30px rgba(0,0,0,.5)}
+  /* la pantalla no responde a toques: todo se maneja con el panel */
+  .screen{container-type:inline-size; pointer-events:none; user-select:none; -webkit-user-select:none; width:100%; aspect-ratio:640/470; border-radius:16px; background:#0B1A1D; position:relative; overflow:hidden; box-shadow:inset 0 0 90px rgba(0,0,0,.75)}
+  .screen::before{content:""; position:absolute; inset:0; z-index:3; background:repeating-linear-gradient(0deg,rgba(0,0,0,.22) 0 1px,transparent 1px 3px)}
+  .screen::after{content:""; position:absolute; inset:0; z-index:3; border-radius:16px; box-shadow:inset 0 0 0 1px rgba(95,214,192,.15),inset 0 30px 60px rgba(255,255,255,.03)}
+  .scr{position:absolute; inset:0; display:flex; flex-direction:column; box-sizing:border-box}
+  .px{font-family:var(--pixel); font-weight:400}
+
+  .attract{align-items:center; justify-content:center; gap:20px; padding:30px; text-align:center}
+  .attract .pre{margin:0; font-size:11px; color:var(--muted); letter-spacing:2px}
+  .attract .big{margin:0; font-size:clamp(26px,6.2cqw,40px); line-height:1.2; color:var(--gold)}
+  .attract .call{margin:6px 0 0; font-size:16px; color:var(--rose)}
+  .attract .hint{margin:0; font-size:13px; color:#9DB5B8; max-width:46ch}
+  .lineup{display:flex; flex-wrap:wrap; justify-content:center; gap:8px 16px; max-width:520px; margin-top:6px}
+  .lineup span{font:900 13px var(--display); letter-spacing:.5px}
+
+  .select{gap:12px; padding:20px 22px 16px}
+  .shead{display:flex; justify-content:space-between; align-items:center; gap:10px; font-size:10px}
+  .cats{display:flex; gap:6px; flex-wrap:wrap}
+  .cats span{font:700 11px var(--mono); letter-spacing:1px; padding:6px 11px; border-radius:99px; border:1px solid var(--line); color:#9DB5B8}
+  .cats span.on{background:var(--gold); border-color:var(--gold); color:var(--ground)}
+  .carousel{flex:1; min-height:0; display:flex; align-items:center; justify-content:center; gap:14px}
+  .side{width:128px; height:196px; flex:none; background:var(--panel); border:1px solid var(--line); border-top:4px solid var(--a); border-radius:12px; padding:12px; display:flex; flex-direction:column; gap:8px; opacity:.5}
+  .side small{font-size:10px; color:var(--muted); letter-spacing:2px}
+  .side b{font:900 16px/1.1 var(--display); color:var(--a)}
+  .main{width:300px; max-width:100%; min-height:252px; background:var(--panel2); border:2px solid var(--a); border-top-width:8px; border-radius:14px; padding:16px 18px 14px; display:flex; flex-direction:column; gap:9px; box-shadow:0 0 28px var(--h)}
+  .main .row{display:flex; justify-content:space-between; align-items:center; gap:8px}
+  .main .num{font-size:10px; color:var(--muted)}
+  .main .tag{font-size:10px; font-weight:700; letter-spacing:1.5px; padding:3px 8px; border-radius:4px; background:var(--ground); color:var(--a)}
+  .main h2{margin:0; font:900 30px/1.05 var(--display); letter-spacing:-.5px; color:var(--a)}
+  .main p{margin:0; font-size:13px; line-height:1.45; color:#B9CCCD; flex:1}
+  .modes{display:flex; gap:5px}
+  .modes span{font-size:8px; padding:5px 6px; border-radius:4px; border:1px solid var(--line); color:#3D5D64; text-decoration:line-through}
+  .modes span.ok{border-color:#3E6E78; color:#9DB5B8; text-decoration:none}
+  .modes span.cur{background:var(--aqua); border-color:var(--aqua); color:var(--ground)}
+  .main .foot{border-top:1px dashed var(--line); padding-top:9px; font-size:11px; color:var(--muted)}
+  .main .foot b{color:var(--ink)}
+  .main .foot .px{font-size:9px; color:var(--gold); white-space:nowrap}
+  .dots{display:flex; justify-content:center; gap:5px}
+  .dots i{height:6px; border-radius:3px; background:var(--line)}
+  .slegend{display:flex; justify-content:space-between; flex-wrap:wrap; gap:4px 12px; font-size:11px; color:var(--muted); letter-spacing:1px}
+
+  .ready{align-items:center; justify-content:center; gap:18px; padding:30px 40px; text-align:center}
+  .ready .who{margin:0; font-size:12px; color:var(--aqua)}
+  .ready h2{margin:0; font:900 clamp(30px,8cqw,52px)/1 var(--display); letter-spacing:-1px; color:var(--a); text-shadow:0 0 24px var(--h)}
+  .ready p{margin:0; font-size:14px; color:#B9CCCD; max-width:420px}
+  .bar{width:min(360px,80%); border:2px solid var(--line); border-radius:4px; padding:2px}
+  .bar i{display:block; height:14px; border-radius:2px; background:var(--a); animation:load .9s ease-in both}
+
+  .flash{position:absolute; z-index:2; left:50%; bottom:58px; transform:translateX(-50%); background:var(--rose); color:var(--ground); font-size:11px; padding:10px 16px; border-radius:6px; white-space:nowrap}
+
+  .grill{display:flex; gap:8px}
+  .grill i{width:54px; height:6px; border-radius:3px; background:#071113}
+
+  /* panel de control */
+  .panel{width:min(840px,100%); background:#1A3A43; border:4px solid var(--line); border-top:8px solid #2F5A64; border-radius:10px 10px 18px 18px; padding:24px 40px 28px; display:grid; grid-template-columns:auto 1fr auto; grid-template-areas:"stick mid act"; align-items:center; gap:24px; box-shadow:0 18px 30px rgba(0,0,0,.45); touch-action:manipulation}
+  .stickwrap{grid-area:stick; display:flex; flex-direction:column; align-items:center; gap:8px}
+  .stick{display:grid; grid-template-columns:repeat(3,52px); grid-template-rows:repeat(3,52px); gap:4px; place-items:center}
+  .dir{width:48px; height:48px; border-radius:10px; border:1px solid var(--line); border-bottom-width:4px; background:var(--panel); font-size:16px; padding:0}
+  .dir:active{border-bottom-width:1px; transform:translateY(3px)}
+  .ball{width:56px; height:56px; border-radius:50%; background:#071113; box-shadow:inset 0 3px 8px rgba(0,0,0,.8); display:grid; place-items:center}
+  .ball i{width:40px; height:40px; border-radius:50%; background:var(--rose); box-shadow:inset -4px -6px 0 rgba(0,0,0,.25),0 6px 10px rgba(0,0,0,.5); transition:transform .12s}
+  .lbl{font-size:10px; letter-spacing:3px; color:var(--muted)}
+  .mid{grid-area:mid; display:flex; flex-direction:column; align-items:center; gap:12px}
+  .modebtns{display:flex; gap:8px; flex-wrap:wrap; justify-content:center}
+  .mb{min-width:64px; height:44px; padding:0 10px; border-radius:8px; border:2px solid var(--aqua); background:var(--ground); color:var(--aqua); font:400 10px var(--pixel)}
+  .mb[aria-pressed=true]{background:var(--aqua); color:var(--ground)}
+  .rand{width:158px; height:48px; border-radius:99px; border:2px solid var(--violet); border-bottom-width:5px; background:#1E1530; color:var(--violet); font:400 10px var(--pixel)}
+  .rand.on{background:var(--violet); color:#150D1E}
+  .act{grid-area:act; display:flex; align-items:flex-end; gap:22px}
+  .act > div{display:flex; flex-direction:column; align-items:center; gap:8px}
+  .round{border:0; border-radius:50%; color:var(--ground); font:400 16px var(--pixel); transition:transform .08s,box-shadow .08s}
+  .round.b{width:66px; height:66px; background:var(--rose); box-shadow:0 6px 0 #A9483A,0 10px 18px rgba(0,0,0,.45)}
+  .round.a{width:88px; height:88px; font-size:22px; background:var(--gold); box-shadow:0 6px 0 #B8860B,0 10px 18px rgba(0,0,0,.45)}
+  .round:active,.round.on{transform:translateY(5px)}
+  .round.b:active,.round.b.on{box-shadow:0 1px 0 #A9483A,0 2px 6px rgba(0,0,0,.4)}
+  .round.a:active,.round.a.on{box-shadow:0 1px 0 #B8860B,0 2px 6px rgba(0,0,0,.4)}
+  .act .a-wrap{margin-bottom:14px}
+  .act .a-wrap .lbl{color:var(--gold); letter-spacing:2px}
+  .act .lbl{letter-spacing:2px}
+
+  .base{width:min(700px,90%); height:60px; background:#102A31; border:4px solid var(--line); border-top:0; border-radius:0 0 10px 10px; display:flex; justify-content:center; align-items:center; gap:10px}
+  .base i{width:70px; height:4px; border-radius:2px; background:var(--violet); opacity:.7}
+  .base span{font:400 9px var(--pixel); color:var(--aqua); letter-spacing:2px}
+  .shadow{width:min(760px,95%); height:26px; border-radius:50%; background:rgba(0,0,0,.55); filter:blur(10px); margin-top:-6px}
+
+  /* teléfonos: menos relleno, sin tarjetas laterales, panel en dos filas */
+  @container (max-width:720px){
+    .body{padding:16px 22px 16px}
+    .bezel{padding:10px; border-radius:16px}
+    .bulbs{gap:12px}
+    .sign p{letter-spacing:3px; font-size:10px}
+    .panel{grid-template-columns:auto auto; grid-template-areas:"stick act" "mid mid"; justify-content:space-between; padding:18px 16px 20px; gap:16px 10px}
+    .stick{grid-template-columns:repeat(3,46px); grid-template-rows:repeat(3,46px)}
+    .dir{width:44px; height:44px}
+    .ball{width:44px; height:44px}.ball i{width:32px; height:32px}
+    .act{gap:12px}
+    .round.b{width:58px; height:58px}.round.a{width:76px; height:76px}
+    .mid{flex-direction:row; flex-wrap:wrap; justify-content:center; width:100%}
+    .rand{width:auto; padding:0 16px}
+    .grill i{width:30px}
+  }
+  @container (max-width:560px){
+    .screen{aspect-ratio:auto; height:440px}
+    .side{display:none}
+    .main{width:100%}
+    .select{padding:14px 12px 12px; gap:10px}
+    .slegend span:nth-child(-n+2){display:none}
+  }
+  @container (max-width:400px){
+    .body::before,.body::after{display:none}
+    .body{padding:12px 10px}
+    .main h2{font-size:24px}
+  }
+
+  /* ===== jugando (pantalla completa) ===== */
+  .play{max-width:960px; margin-inline:auto; padding:14px 16px 22px; display:flex; flex-direction:column; gap:12px; animation:fsin .35s ease-out both}
+  .ptop{display:flex; align-items:center; justify-content:space-between; gap:12px}
+  .pname{display:flex; align-items:center; gap:12px; min-width:0}
+  .pname i{width:12px; height:12px; border-radius:3px; flex:none}
+  .pname b{font:900 22px var(--display); white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
+  .pname small{font-size:12px; color:var(--muted); white-space:nowrap}
+  .exit{flex:none; height:44px; padding:0 18px; border-radius:99px; border:2px solid var(--rose); background:transparent; color:var(--rose); font:400 10px var(--pixel)}
+
+  .stage{position:relative; border:1px solid var(--line); border-radius:12px; overflow:hidden; background:var(--panel); line-height:0}
+  canvas{display:block; width:100%; height:auto}
+  .hud{position:absolute; top:0; left:0; right:0; padding:10px 10px 0; pointer-events:none; display:flex; flex-direction:column; gap:6px}
+  .hud-row{display:flex; gap:6px; flex-wrap:wrap}
+  .chip{background:rgba(13,26,30,.78); border:1px solid var(--line); border-radius:7px; padding:2px 9px; font-size:12px; font-variant-numeric:tabular-nums; line-height:1.6}
+  .hud-bar{height:5px; background:rgba(13,26,30,.75); border:1px solid var(--line); border-radius:99px; overflow:hidden}
+  .hud-bar i{display:block; height:100%}
+  .over{position:absolute; inset:0; display:grid; place-items:center; background:rgba(10,20,23,.9); padding:18px; overflow:auto}
+  .over.hide{display:none}
+  .inner{display:flex; flex-direction:column; align-items:center; gap:9px; max-width:880px; text-align:center; line-height:1.5}
+  .over h2{font-family:var(--display); font-weight:900; font-size:clamp(20px,4.2vw,28px); margin:0; letter-spacing:-.03em; line-height:1.08; text-wrap:balance}
+  .over p{margin:0; color:var(--muted); font-size:12.5px; max-width:46ch}
+  .eyebrow{font-size:10.5px; letter-spacing:.2em; text-transform:uppercase; color:var(--muted); margin:0}
+  .stats{display:flex; gap:16px; flex-wrap:wrap; justify-content:center; font-size:11.5px; color:var(--muted)}
+  .stats b{display:block; font-family:var(--display); font-weight:900; font-size:21px; color:var(--ink); font-variant-numeric:tabular-nums}
+  .go{font-family:var(--mono); font-size:13px; color:var(--ground); background:var(--gold); border:0; border-radius:99px; padding:9px 22px; cursor:pointer; font-weight:700}
+  .go:hover{filter:brightness(1.08)}
+  kbd{background:var(--panel2); border:1px solid var(--line); border-bottom-width:2px; border-radius:5px; padding:1px 6px; font-family:var(--mono); font-size:11.5px}
+  .legend{display:flex; flex-wrap:wrap; gap:6px 16px; justify-content:space-between; color:var(--muted); font-size:11.5px}
+
+  /* controles táctiles del juego */
+  .pad{display:none; gap:10px; align-items:center; justify-content:space-between; user-select:none; -webkit-user-select:none; touch-action:none}
+  body.touch .pad{display:flex}
+  .dpad{display:grid; grid-template-columns:repeat(3,52px); grid-template-rows:repeat(3,52px); gap:4px; flex:none}
+  .pb{background:var(--panel2); border:1px solid var(--line); border-bottom-width:3px; border-radius:10px; color:var(--ink); font:700 14px var(--mono); display:grid; place-items:center; padding:0 8px; min-height:44px; touch-action:none}
+  .pb.on{background:#24474F; border-color:var(--aqua)}
+  .dpad .pb{font-size:20px; padding:0}
+  .dpad .u{grid-column:2;grid-row:1}.dpad .l{grid-column:1;grid-row:2}.dpad .r{grid-column:3;grid-row:2}.dpad .d{grid-column:2;grid-row:3}
+  .acts{display:flex; flex-wrap:wrap; gap:6px; justify-content:flex-end; align-content:center; flex:1; min-width:0}
+  .acts .pb.big{min-width:96px; min-height:60px; border-color:var(--gold); color:var(--gold)}
+  .acts .pb.num{min-width:38px}
+  .padtop{display:none; justify-content:space-between; gap:8px}
+  body.touch .padtop{display:flex}
+  body.touch .legend{display:none}
+  .sub{color:var(--muted); font-size:12px; margin:0}
+  @media (max-width:520px){ .play{padding:10px 0 16px} .ptop{padding-inline:10px} .pname small{display:none} }
+  @media (prefers-reduced-motion:reduce){
+    .blink,.glow,.bulbs i{animation:none}
+    .cab{transition-duration:.01s}
+    .play,.bar i{animation-duration:.01s}
+  }
+</style>
+</head>
+<body>
+
+<div class="machine" id="machine">
+  <div class="cab" id="cab">
+    <div class="marquee">
+      <div class="bulbs" aria-hidden="true"><i style="--c:#FFCE5C"></i><i style="--c:#EE7563"></i><i style="--c:#5FD6C0"></i><i style="--c:#C58BFF"></i><i style="--c:#FFCE5C"></i><i style="--c:#EE7563"></i><i style="--c:#5FD6C0"></i><i style="--c:#C58BFF"></i><i style="--c:#FFCE5C"></i><i style="--c:#EE7563"></i></div>
+      <div class="sign"><h1 class="glow">BUG ARCADE</h1><p id="total">MESA DE JUEGOS</p></div>
+    </div>
+    <div class="body">
+      <div class="bezel">
+        <div class="screen" id="screen" role="region" aria-label="Pantalla del arcade" aria-live="polite"></div>
+      </div>
+      <div class="grill" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i></div>
+    </div>
+    <div class="panel" id="panel">
+      <div class="stickwrap">
+        <div class="stick">
+          <span></span><button class="dir" data-dir="u" aria-label="Arriba: categoría anterior">▲</button><span></span>
+          <button class="dir" data-dir="l" aria-label="Izquierda: juego anterior">◀</button>
+          <div class="ball" aria-hidden="true"><i id="knob"></i></div>
+          <button class="dir" data-dir="r" aria-label="Derecha: juego siguiente">▶</button>
+          <span></span><button class="dir" data-dir="d" aria-label="Abajo: categoría siguiente">▼</button><span></span>
+        </div>
+        <span class="lbl">PALANCA</span>
+      </div>
+      <div class="mid">
+        <div class="modebtns">
+          <button class="mb" data-mode="1" aria-pressed="true" title="Un jugador">1P</button>
+          <button class="mb" data-mode="2" aria-pressed="false" title="Dos jugadores en este mismo aparato">2P</button>
+          <button class="mb" data-mode="R" aria-pressed="false" title="Remoto: cada quien en su celular">REMOTO</button>
+        </div>
+        <button class="rand" id="rand">? AL AZAR</button>
+      </div>
+      <div class="act">
+        <div><button class="round b" id="btnB" aria-label="B: volver">B</button><span class="lbl">VOLVER</span></div>
+        <div class="a-wrap"><button class="round a" id="btnA" aria-label="A: jugar">A</button><span class="lbl">JUGAR</span></div>
+      </div>
+    </div>
+    <div class="base"><i aria-hidden="true"></i><span>JUEGO LIBRE</span><i aria-hidden="true"></i></div>
+    <div class="shadow" aria-hidden="true"></div>
+  </div>
+</div>
+
+<div class="play" id="play" hidden>
+  <div class="ptop">
+    <div class="pname"><i id="pDot"></i><b id="pName"></b><small id="pMode"></small></div>
+    <button class="exit" id="exit">B · SALIR</button>
+  </div>
+  <div class="stage" id="stage">
+    <canvas id="c"></canvas>
+    <div class="hud" id="hud"></div>
+    <div class="over hide" id="over"><div class="inner" id="overInner"></div></div>
+  </div>
+  <div class="padtop"><button class="pb" data-k="Escape">☰ Pausa</button><span class="sub" id="padHint" style="align-self:center;text-align:right"></span></div>
+  <div class="pad" id="pad">
+    <div class="dpad" id="dpad"><button class="pb u" data-k="ArrowUp">▲</button><button class="pb l" data-k="ArrowLeft">◀</button><button class="pb r" data-k="ArrowRight">▶</button><button class="pb d" data-k="ArrowDown">▼</button></div>
+    <div class="acts" id="acts"></div>
+  </div>
+  <div class="legend" id="legend"></div>
+</div>
+
+<script src="engine.js"></script>
+<script>
+/* remember which game is running, for the touch pad */
+(function(){var reg=window.Arcade.register;window.Arcade.register=function(g){var st=g.start;g.start=function(){window.__padGame=g.id;var cv=document.getElementById("c");if(cv){cv.style.touchAction="";cv.dataset.ta="";delete cv.dataset.wsTouch;}if(window.__padSet)window.__padSet(g.id);return st.apply(this,arguments)};reg(g)}})();
+</script>
+<script src="g-merge.js"></script>
+<script src="g-race.js"></script>
+<script src="g-nullptr.js"></script>
+<script src="g-deploy.js"></script>
+<script src="g-refactor.js"></script>
+<script src="g-pipeline.js"></script>
+<script src="g-gc.js"></script>
+<script src="g-sudoku.js"></script>
+<script src="g-2048.js"></script>
+<script src="g-mines.js"></script>
+<script src="g-tetris.js"></script>
+<script src="g-flappy.js"></script>
+<script src="g-pong.js"></script>
+<script src="g-invaders.js"></script>
+<script src="g-memory.js"></script>
+<script src="g-connect4.js"></script>
+<script src="g-gato.js"></script>
+<script src="g-simon.js"></script>
+<script src="g-whack.js"></script>
+<script src="g-frogger.js"></script>
+<script src="g-hangman.js"></script>
+<script src="g-pacman.js"></script>
+<script src="g-jump.js"></script>
+<script src="g-stack.js"></script>
+<script src="g-rps.js"></script>
+<script src="g-lights.js"></script>
+<script src="g-hanoi.js"></script>
+<script src="g-slide15.js"></script>
+<script src="g-wordle.js"></script>
+<script src="g-naval.js"></script>
+<script src="g-heli.js"></script>
+<script src="g-racer.js"></script>
+<script src="g-catcher.js"></script>
+<script src="g-target.js"></script>
+<script src="g-dodge.js"></script>
+<script src="g-blackjack.js"></script>
+<script src="g-higherlower.js"></script>
+<script src="g-reversi.js"></script>
+<script src="g-wordsearch.js"></script>
+<script src="g-mathrush.js"></script>
+<script src="duo.js"></script>
+<script src="d-gato.js"></script>
+<script src="d-connect4.js"></script>
+<script src="d-reversi.js"></script>
+<script src="machine.js"></script>
+<script src="pad.js"></script>
+<script>window.Arcade.boot();</script>
+</body>
+</html>
