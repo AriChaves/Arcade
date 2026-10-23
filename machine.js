@@ -168,23 +168,30 @@ function random(){
 }
 
 /* ---------- acercarse a la pantalla y jugar ---------- */
-/* shrink the whole machine so it fits the visible height; never below 55% so buttons stay tappable */
-let fitScale=1;
-/* inside claude.ai the frame grows to fit the page, so innerHeight is not what the viewer sees:
-   estimate it from the browser window minus the browser bar and the viewer's header */
-function visibleHeight(){
-  let framed=false; try{ framed=window.top!==window; }catch(e){ framed=true; }
-  if(!framed) return window.innerHeight;
-  const bar=window.innerWidth<600?130:230;
-  return Math.min((window.outerHeight||9999)-bar, (screen.availHeight||9999)-bar+40); }
+/* shrink the whole machine so it fits the visible height. Inside claude.ai the frame can grow with
+   the page, so innerHeight is not what the viewer sees: a fixed, invisible strip measures how much of
+   the page the browser actually shows (IntersectionObserver clips it to the real viewport). */
+let fitScale=1, seen=0;
+const strip=document.createElement('div');
+strip.setAttribute('aria-hidden','true');
+strip.style.cssText='position:fixed;left:0;top:0;width:1px;height:4000px;opacity:0;pointer-events:none';
+document.body.appendChild(strip);
+if(window.IntersectionObserver){
+  new IntersectionObserver(es=>{ const v=Math.round(es[es.length-1].intersectionRect.height);
+    if(v>80&&Math.abs(v-seen)>3){ seen=v; fit(); } },{threshold:Array.from({length:401},(_,i)=>i/400)}).observe(strip); }
+function visibleHeight(){ return seen?Math.min(seen,window.innerHeight):window.innerHeight; }
+const minScale=matchMedia('(pointer:coarse)').matches?0.55:0.4;
 function fit(){ const m=$('machine'), f=$('fit'), cab=$('cab'); if(m.hidden) return;
   const cs=getComputedStyle(m), pad=parseFloat(cs.paddingTop)+parseFloat(cs.paddingBottom);
   const h=cab.offsetHeight, avail=visibleHeight()-pad;
-  fitScale=Math.max(0.55,Math.min(1,avail/h));
+  fitScale=Math.max(minScale,Math.min(1,avail/h));
   f.style.transform=fitScale<1?'scale('+fitScale+')':'';
   f.style.marginBottom=fitScale<1?(-(1-fitScale)*h)+'px':''; }
-window.addEventListener('resize',fit);
-if(window.ResizeObserver) new ResizeObserver(fit).observe($('cab'));
+/* on resize, let the page grow back first so a bigger window is measured, then fit again */
+let resizeT=null;
+window.addEventListener('resize',()=>{ const f=$('fit'); f.style.transform=''; f.style.marginBottom='';
+  clearTimeout(resizeT); resizeT=setTimeout(fit,250); });
+if(window.ResizeObserver) new ResizeObserver(()=>fit()).observe($('cab'));
 if(document.fonts&&document.fonts.ready) document.fonts.ready.then(fit);
 function aimZoom(){ const cab=$('cab'), r=cab.getBoundingClientRect(), s=$('screen').getBoundingClientRect();
   cab.style.transformOrigin=((s.left-r.left+s.width/2)/fitScale)+'px '+((s.top-r.top+s.height/2)/fitScale)+'px'; }

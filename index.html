@@ -303,7 +303,7 @@
   <div class="legend" id="legend"></div>
 </div>
 
-<script src="engine.js?v=5"></script>
+<script src="engine.js?v=6"></script>
 <script>
 /* remember which game is running, for the touch pad */
 (function(){var reg=window.Arcade.register;window.Arcade.register=function(g){var st=g.start;g.start=function(){window.__padGame=g.id;var cv=document.getElementById("c");if(cv){cv.style.touchAction="";cv.dataset.ta="";delete cv.dataset.wsTouch;}if(window.__padSet)window.__padSet(g.id);return st.apply(this,arguments)};reg(g)}})();
@@ -348,12 +348,12 @@
 <script src="g-reversi.js"></script>
 <script src="g-wordsearch.js"></script>
 <script src="g-mathrush.js"></script>
-<script src="duo.js?v=5"></script>
+<script src="duo.js?v=6"></script>
 <script src="d-gato.js"></script>
 <script src="d-connect4.js"></script>
 <script src="d-reversi.js"></script>
-<script src="machine.js?v=5"></script>
-<script src="pad.js?v=5"></script>
+<script src="machine.js?v=6"></script>
+<script src="pad.js?v=6"></script>
 <script>window.Arcade.boot();</script>
 </body>
 </html>
