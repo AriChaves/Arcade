@@ -174,8 +174,9 @@ let fitScale=1;
    estimate it from the browser window minus the browser bar and the viewer's header */
 function visibleHeight(){
   let framed=false; try{ framed=window.top!==window; }catch(e){ framed=true; }
-  const outer=window.outerHeight||screen.availHeight||window.innerHeight;
-  return framed?outer-(window.innerWidth<600?130:230):window.innerHeight; }
+  if(!framed) return window.innerHeight;
+  const bar=window.innerWidth<600?130:230;
+  return Math.min((window.outerHeight||9999)-bar, (screen.availHeight||9999)-bar+40); }
 function fit(){ const m=$('machine'), f=$('fit'), cab=$('cab'); if(m.hidden) return;
   const cs=getComputedStyle(m), pad=parseFloat(cs.paddingTop)+parseFloat(cs.paddingBottom);
   const h=cab.offsetHeight, avail=visibleHeight()-pad;
