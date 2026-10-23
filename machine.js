@@ -178,7 +178,7 @@ strip.style.cssText='position:fixed;left:0;top:0;width:1px;height:4000px;opacity
 document.body.appendChild(strip);
 if(window.IntersectionObserver){
   new IntersectionObserver(es=>{ const v=Math.round(es[es.length-1].intersectionRect.height);
-    if(v>80&&Math.abs(v-seen)>3){ seen=v; fit(); } },{threshold:Array.from({length:401},(_,i)=>i/400)}).observe(strip); }
+    if(v>80&&Math.abs(v-seen)>3){ seen=v; fit(); if(S.screen==='play') window.Arcade.resize(); } },{threshold:Array.from({length:401},(_,i)=>i/400)}).observe(strip); }
 function visibleHeight(){ return seen?Math.min(seen,window.innerHeight):window.innerHeight; }
 const minScale=matchMedia('(pointer:coarse)').matches?0.55:0.4;
 function fit(){ const m=$('machine'), f=$('fit'), cab=$('cab'); if(m.hidden) return;
@@ -221,6 +221,16 @@ function backToMachine(){
   void cab.offsetWidth; cab.classList.remove('instant'); requestAnimationFrame(()=>cab.classList.remove('zoom'));
 }
 window.Arcade.onMenu=backToMachine;
+/* while playing, the canvas gets whatever height is left after the title bar, controls and legend */
+window.Arcade.maxStageH=()=>{ const play=$('play'), stage=$('stage'); if(play.hidden) return Infinity;
+  return Math.floor(visibleHeight()-(play.offsetHeight-stage.offsetHeight)-4); };
+/* B exits the game, except in games where you type letters */
+const TYPING=new Set(['wordle','hangman']);
+window.addEventListener('keydown',e=>{
+  if(S.screen!=='play'||e.key.toLowerCase()!=='b'||e.ctrlKey||e.metaKey||e.altKey) return;
+  if(TYPING.has(window.__padGame)||(e.target.closest&&e.target.closest('input,textarea'))) return;
+  e.preventDefault(); e.stopImmediatePropagation(); window.Arcade.menu();
+},true);
 
 $('total').textContent='MESA DE JUEGOS · '+GAMES.length+' JUEGOS';
 document.querySelectorAll('.dir').forEach(b=>b.addEventListener('click',()=>nudge(b.dataset.dir)));

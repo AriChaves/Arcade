@@ -24,7 +24,9 @@ let games=[], cur=null, state='menu', last=0, shake=0, hudCache='', parts=[];
 
 function resize(){
   W = Math.max(280, stage.clientWidth || 820);
-  H = Math.max(330, Math.min(500, Math.round(W*0.58)));
+  /* the page may cap the height so the whole game view fits the window (machine.js) */
+  const cap = window.Arcade && window.Arcade.maxStageH ? window.Arcade.maxStageH() : Infinity;
+  H = Math.max(320, Math.min(500, Math.round(W*0.58), cap));
   DPR = Math.min(window.devicePixelRatio||1, 2);
   cv.width = Math.round(W*DPR);
   cv.height = Math.round(H*DPR);
