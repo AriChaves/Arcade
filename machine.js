@@ -168,8 +168,19 @@ function random(){
 }
 
 /* ---------- acercarse a la pantalla y jugar ---------- */
+/* shrink the whole machine so it fits the visible height; never below 55% so buttons stay tappable */
+let fitScale=1;
+function fit(){ const m=$('machine'), f=$('fit'), cab=$('cab'); if(m.hidden) return;
+  const cs=getComputedStyle(m), pad=parseFloat(cs.paddingTop)+parseFloat(cs.paddingBottom);
+  const h=cab.offsetHeight, avail=window.innerHeight-pad;
+  fitScale=Math.max(0.55,Math.min(1,avail/h));
+  f.style.transform=fitScale<1?'scale('+fitScale+')':'';
+  f.style.marginBottom=fitScale<1?(-(1-fitScale)*h)+'px':''; }
+window.addEventListener('resize',fit);
+if(window.ResizeObserver) new ResizeObserver(fit).observe($('cab'));
+if(document.fonts&&document.fonts.ready) document.fonts.ready.then(fit);
 function aimZoom(){ const cab=$('cab'), r=cab.getBoundingClientRect(), s=$('screen').getBoundingClientRect();
-  cab.style.transformOrigin=(s.left-r.left+s.width/2)+'px '+(s.top-r.top+s.height/2)+'px'; }
+  cab.style.transformOrigin=((s.left-r.left+s.width/2)/fitScale)+'px '+((s.top-r.top+s.height/2)/fitScale)+'px'; }
 function start(){
   const g=current(); if(!g) return;
   S.screen='ready'; render(); aimZoom(); $('cab').classList.add('zoom');
@@ -191,7 +202,7 @@ let backAt=-1e9;
 function backToMachine(){
   window.__padGame=null; backAt=performance.now(); /* the Esc that got us here must not also press B */
   if(S.screen!=='play'){ render(); return; }
-  S.screen='select'; $('play').hidden=true; $('machine').hidden=false;
+  S.screen='select'; $('play').hidden=true; $('machine').hidden=false; fit();
   const cab=$('cab'); cab.classList.add('instant','zoom'); render(); aimZoom();
   void cab.offsetWidth; cab.classList.remove('instant'); requestAnimationFrame(()=>cab.classList.remove('zoom'));
 }
@@ -217,5 +228,5 @@ window.addEventListener('keydown',e=>{
   else if(k==='?'||k==='r'){ random(); }
   else if(k==='1'||k==='2'){ setMode(k); }
 });
-render();
+render(); fit();
 })();

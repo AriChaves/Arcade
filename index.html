@@ -33,7 +33,9 @@
   .glow{animation:glow 2.4s ease-in-out infinite}
 
   /* ===== la máquina ===== */
-  .machine{container-type:inline-size; overflow:hidden; padding:28px 8px 24px; background:radial-gradient(ellipse 60% 45% at 50% 38%,#12303A 0%,#060D0F 70%)}
+  .machine{container-type:inline-size; overflow:hidden; padding:16px 8px 12px; background:radial-gradient(ellipse 60% 45% at 50% 38%,#12303A 0%,#060D0F 70%)}
+  /* machine.js scales .fit so the whole machine fits the screen height */
+  .fit{transform-origin:top center}
   .cab{display:flex; flex-direction:column; align-items:center; transition:transform .75s cubic-bezier(.6,0,.2,1)}
   .cab.zoom{transform:scale(2.2)}
   .cab.instant{transition:none}
@@ -153,7 +155,28 @@
     .grill i{width:30px}
   }
   @container (max-width:560px){
-    .screen{aspect-ratio:auto; height:440px}
+    .screen{aspect-ratio:auto; height:345px}
+    .body{padding:12px 14px; gap:0}
+    .bezel{padding:8px}
+    .attract{gap:12px; padding:20px}
+    .attract .big{font-size:28px}
+    .lineup{display:none}
+    .panel{padding:14px 12px 16px; gap:12px 8px; border-top-width:6px}
+    .stick{grid-template-columns:repeat(3,50px); grid-template-rows:repeat(3,50px); gap:2px}
+    .dir{width:50px; height:50px; font-size:18px}
+    .stickwrap .lbl{display:none}
+    .mid{gap:8px}
+    .base{height:26px}
+    .base span{font-size:8px}
+    .marquee{padding:10px 12px 0; border-radius:22px 22px 0 0}
+    .bulbs{padding-bottom:8px}
+    .sign{padding:12px 6px 10px; gap:6px}
+    .cats{flex-wrap:nowrap; overflow:hidden}
+    .cats span{flex:none}
+    .main{min-height:0; padding:14px 14px 12px}
+    .main h2{font-size:26px}
+    .grill{display:none}
+    .shadow{display:none}
     .side{display:none}
     .main{width:100%}
     .select{padding:14px 12px 12px; gap:10px}
@@ -220,6 +243,7 @@
 <body>
 
 <div class="machine" id="machine">
+  <div class="fit" id="fit">
   <div class="cab" id="cab">
     <div class="marquee">
       <div class="bulbs" aria-hidden="true"><i style="--c:#FFCE5C"></i><i style="--c:#EE7563"></i><i style="--c:#5FD6C0"></i><i style="--c:#C58BFF"></i><i style="--c:#FFCE5C"></i><i style="--c:#EE7563"></i><i style="--c:#5FD6C0"></i><i style="--c:#C58BFF"></i><i style="--c:#FFCE5C"></i><i style="--c:#EE7563"></i></div>
@@ -257,6 +281,7 @@
     </div>
     <div class="base"><i aria-hidden="true"></i><span>JUEGO LIBRE</span><i aria-hidden="true"></i></div>
     <div class="shadow" aria-hidden="true"></div>
+  </div>
   </div>
 </div>
 
